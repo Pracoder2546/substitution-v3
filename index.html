@@ -69,7 +69,7 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const uid=()=>Math.random().toString(36).slice(2,9);
 const todayStr=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 let saved=null;try{saved=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-let S=Object.assign({school:"",done:false,theme:matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",classes:[],teachers:[],absent:{},view:"dash"},saved||{});
+let S=Object.assign({school:"",done:false,theme:matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",teachers:[],absent:{},view:"dash"},saved||{});
 S.date=todayStr();let resetArm=false;
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 function toast(m,bad){const t=$("#toast");t.textContent=m;t.className=bad?"bad":"";t.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display="none",4200)}
@@ -78,13 +78,6 @@ function toast(m,bad){const t=$("#toast");t.textContent=m;t.className=bad?"bad":
 const PRE=/^(mr|mrs|ms|miss|dr|sir|madam|mam|maam|shri|smt)\s+/;
 function key(n){let s=String(n||"").toLowerCase().replace(/[.,]/g," ").replace(/\s+/g," ").trim();while(PRE.test(s))s=s.replace(PRE,"");return s}
 const cls=v=>String(v||"").toUpperCase().replace(/[\s\-_\/]/g,"");
-function findTeacher(n){
-  const k=key(n);if(!k)return null;
-  const ex=S.teachers.filter(t=>key(t.name)===k);if(ex.length)return ex[0];
-  const kt=k.split(" ");
-  const c=S.teachers.filter(t=>{const tt=key(t.name).split(" ");return tt[0]&&(kt.every(x=>tt.includes(x))||tt.every(x=>kt.includes(x)))});
-  return c.length===1?c[0]:null; /* ambiguous or unknown: ignore quietly, never error */
-}
 
 /* ---------- excel parsing ---------- */
 const FREE=/^(free|-+|—|–|nil|n\/a|na|x|\.)?$/i;
@@ -103,16 +96,11 @@ function parseTT(rows){
 }
 
 /* ---------- substitution algorithm ---------- */
-function buildIdx(){
-  const m={};
-  S.classes.forEach(c=>{if(!c.tt)return;DAYS.forEach(d=>(c.tt[d]||[]).forEach((v,i)=>{if(!v)return;const t=findTeacher(v);if(t&&!m[t.id+"|"+d+"|"+i])m[t.id+"|"+d+"|"+i]=cls(c.name)}))});
-  return m;
-}
 function gen(date){
   const wd=new Date(date+"T00:00:00").getDay();
   if(wd===0)return{off:true,as:[],unc:[]};
-  const day=DAYS[wd-1],idx=buildIdx(),ab=new Set(S.absent[date]||[]);
-  const busy=(t,i)=>{const o=(t.tt&&t.tt[day]||[])[i];return o?cls(o):(idx[t.id+"|"+day+"|"+i]||"")};
+  const day=DAYS[wd-1],ab=new Set(S.absent[date]||[]);
+  const busy=(t,i)=>{const o=(t.tt&&t.tt[day]||[])[i];return o?cls(o):""};
   const pres=S.teachers.filter(t=>!ab.has(t.id)),by=Object.fromEntries(S.teachers.map(t=>[t.id,t]));
   const free=Array.from({length:P},(_,i)=>pres.filter(t=>!busy(t,i)).map(t=>t.id)); /* free-period list */
   const load={},teach={};
@@ -155,18 +143,17 @@ const hero=()=>`<svg viewBox="0 0 220 120" aria-hidden="true"><rect width="220" 
 const longDate=d=>new Date(d+"T00:00:00").toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 function ttRows(list,t){
   const kc={};S.teachers.forEach(x=>{const k=key(x.name);kc[k]=(kc[k]||0)+1});
-  return list.map(it=>`<div class="row"><input type="text" data-k="${t}n" data-id="${it.id}" placeholder="${t==="c"?"Class, e.g. 9-B or 6-A":"Teacher, e.g. Ms Nidhi or Mr Vikas Sharma"}" value="${esc(it.name)}">
+  return list.map(it=>`<div class="row"><input type="text" data-k="${t}n" data-id="${it.id}" placeholder="Teacher, e.g. Ms Nidhi or Mr Vikas Sharma" value="${esc(it.name)}">
   <label class="file">Upload timetable<input type="file" hidden accept=".xlsx,.xls,.csv" data-k="${t}f" data-id="${it.id}"></label>
   <span class="chip ${it.tt?"ok":""}">${it.tt?"✓ "+esc(it.fn||"loaded")+" · "+it.n+" periods":"No timetable yet"}</span>
-  ${t==="t"&&it.name&&kc[key(it.name)]>1?`<span class="chip bad">Same name — add a surname</span>`:""}
+  ${it.name&&kc[key(it.name)]>1?`<span class="chip bad">Same name — add a surname</span>`:""}
   <button class="x" data-act="del" data-t="${t}" data-id="${it.id}" title="Remove">✕</button></div>`).join("");
 }
 function vTT(){
   const ok=S.school.trim()&&S.teachers.some(t=>t.tt);
-  return `<div class="card hero">${hero()}<div><h1>${S.done?"Timetables":"Welcome — let’s set up your school"}</h1><p class="sub">Upload each timetable once. Rows are days (Mon–Sat), columns are periods 1–8, and each cell holds a teacher name (class files) or a class (teacher files). Blank means free.</p><button class="btn gold" data-act="tpl">Download Excel template</button></div></div>
+  return `<div class="card hero">${hero()}<div><h1>${S.done?"Timetables":"Welcome — let’s set up your school"}</h1><p class="sub">Upload each timetable once. Rows are days (Mon–Sat), columns are periods 1–8, and each cell holds the class the teacher is teaching (e.g. 9B). Blank means free.</p><button class="btn gold" data-act="tpl">Download Excel template</button></div></div>
   <div class="card"><h2>School</h2><div class="row"><input type="text" data-k="school" placeholder="School name" value="${esc(S.school)}"></div></div>
-  <div class="card"><h2>Class timetables</h2><p class="sub">Optional but helpful: used to double-check which classes each teacher has.</p><button class="btn" data-act="addc">+ Add class</button>${ttRows(S.classes,"c")}</div>
-  <div class="card"><h2>Teachers’ timetables</h2><p class="sub">Used to find free periods and each absent teacher’s classes. Titles like Mr/Ms are ignored when matching names.</p><button class="btn" data-act="addt">+ Add teacher</button>${ttRows(S.teachers,"t")}</div>
+  <div class="card"><h2>Teachers’ timetables</h2><p class="sub">Used to find free periods and each absent teacher’s classes. Titles like Mr/Ms are ignored when checking for duplicate names.</p><button class="btn" data-act="addt">+ Add teacher</button>${ttRows(S.teachers,"t")}</div>
   ${S.done?`<p class="sub">Changes are saved automatically in this browser.</p>`:`<button class="btn gold" data-act="finish" ${ok?"":"disabled"}>Finish setup</button> <span class="sub">${ok?"":"Add a school name and at least one teacher timetable."}</span>`}`;
 }
 function vDash(){
@@ -206,32 +193,31 @@ document.addEventListener("click",e=>{
   const b=e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act,id=b.dataset.id;
   if(a!=="reset")resetArm=false;
   if(a==="nav")S.view=b.dataset.v;
-  else if(a==="addc")S.classes.push({id:uid(),name:"",tt:null});
   else if(a==="addt")S.teachers.push({id:uid(),name:"",tt:null});
-  else if(a==="del"){const k=b.dataset.t==="c"?"classes":"teachers";S[k]=S[k].filter(x=>x.id!==id)}
+  else if(a==="del")S.teachers=S.teachers.filter(x=>x.id!==id)
   else if(a==="abs"){const s=new Set(S.absent[S.date]||[]);b.dataset.s==="1"?s.add(id):s.delete(id);S.absent[S.date]=[...s];const r=gen(S.date);if(r.unc.length)toast(r.unc.length+" period(s) can’t be covered — no free teacher.",1)}
   else if(a==="allp")S.absent[S.date]=[];
   else if(a==="theme")S.theme=b.dataset.v;
   else if(a==="finish"){S.done=true;S.view="dash"}
   else if(a==="dl")return exportChart();
   else if(a==="tpl")return exportTemplate();
-  else if(a==="reset"){if(!resetArm){resetArm=true;render();return}try{localStorage.removeItem(KEY)}catch(x){}S={school:"",done:false,theme:S.theme,classes:[],teachers:[],absent:{},view:"dash",date:todayStr()};resetArm=false}
+  else if(a==="reset"){if(!resetArm){resetArm=true;render();return}try{localStorage.removeItem(KEY)}catch(x){}S={school:"",done:false,theme:S.theme,teachers:[],absent:{},view:"dash",date:todayStr()};resetArm=false}
   save();render();
 });
 document.addEventListener("input",e=>{
   const k=e.target.dataset.k,id=e.target.dataset.id,v=e.target.value;
   if(k==="school"){S.school=v;$("#bn").textContent=v||"Substitution Planner"}
-  else if(k==="cn"||k==="tn"){const it=(k==="cn"?S.classes:S.teachers).find(x=>x.id===id);if(it)it.name=v}
+  else if(k==="tn"){const it=S.teachers.find(x=>x.id===id);if(it)it.name=v}
   else return;
   save();
 });
 document.addEventListener("change",async e=>{
   const k=e.target.dataset.k,id=e.target.dataset.id;
   if(k==="date"&&e.target.value){S.date=e.target.value;return render()}
-  if(k==="tn"||k==="cn")return render();
-  if(k!=="cf"&&k!=="tf")return;
+  if(k==="tn")return render();
+  if(k!=="tf")return;
   const f=e.target.files[0];if(!f)return;
-  const it=(k==="cf"?S.classes:S.teachers).find(x=>x.id===id);
+  const it=S.teachers.find(x=>x.id===id);
   try{
     const wb=XLSX.read(await f.arrayBuffer(),{type:"array"});
     const r=parseTT(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:""}));
