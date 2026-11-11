@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Substitution Planner</title>
+<style>
+:root{--bg:#F4F5F9;--card:#fff;--text:#0B1F3A;--mut:#5B6780;--line:#E0E4EE;--navy:#0B1F3A;--gold:#C9A227;--btn:#0B1F3A;--btnt:#fff;--bad:#B3261E;--badbg:#FDECEA;--ok:#1E7B4A;--okbg:#E6F4EC;--chip:#EEF1F8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#050C1A;--card:#0E2140;--text:#F1F3F8;--mut:#9FAAC2;--line:#22385E;--btn:#C9A227;--btnt:#0B1F3A;--bad:#FF8F86;--badbg:#3A1714;--ok:#6FD39B;--okbg:#10301F;--chip:#16305A;color-scheme:dark}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#050C1A;--card:#0E2140;--text:#F1F3F8;--mut:#9FAAC2;--line:#22385E;--btn:#C9A227;--btnt:#0B1F3A;--bad:#FF8F86;--badbg:#3A1714;--ok:#6FD39B;--okbg:#10301F;--chip:#16305A;color-scheme:dark}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:#0B1F3A;color:#fff;border-bottom:3px solid var(--gold);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.bar{max-width:1100px;margin:auto;display:flex;align-items:center;gap:16px;padding:10px 16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px}
+.brand i{width:34px;height:34px;border-radius:9px;background:var(--gold);display:grid;place-items:center;color:#0B1F3A;font-style:normal;font-weight:800}
+nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+nav button{background:none;border:0;color:#cfd7e8;padding:8px 14px;border-radius:8px;cursor:pointer;font:inherit}
+nav button.on{background:rgba(201,162,39,.18);color:var(--gold);font-weight:600}
+main{max-width:1100px;margin:auto;padding:20px 16px 60px}
+h1{font-size:24px;margin:0 0 4px}h2{font-size:18px;margin:0 0 4px}
+.sub{color:var(--mut);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 1px 3px rgba(11,31,58,.06)}
+.hero{display:flex;gap:20px;align-items:center;flex-wrap:wrap;background:#0B1F3A;color:#fff;border-color:#0B1F3A}
+.hero svg{width:190px;flex:none}.hero .sub{color:#b9c4dc}.hero>div{flex:1;min-width:220px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:18px}
+.stat{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--gold);border-radius:12px;padding:14px 16px}
+.stat b{display:block;font-size:30px;line-height:1.1}.stat span{color:var(--mut);font-size:13px}
+.stat.bad{border-top-color:var(--bad)}
+.btn{background:var(--btn);color:var(--btnt);border:0;border-radius:9px;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer}
+.btn.gold{background:var(--gold);color:#0B1F3A}.btn.ghost{background:none;color:var(--text);border:1px solid var(--line)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+input[type=text],input[type=date]{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:9px 12px;font:inherit;min-width:0}
+.row{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.row input[type=text]{flex:1;min-width:150px}
+.file{border:1px dashed var(--gold);border-radius:9px;padding:8px 12px;cursor:pointer;font-size:14px}
+.chip{background:var(--chip);border-radius:99px;padding:3px 10px;font-size:12.5px;color:var(--mut)}
+.chip.ok{background:var(--okbg);color:var(--ok)}.chip.bad{background:var(--badbg);color:var(--bad)}
+.x{background:none;border:0;color:var(--mut);cursor:pointer;font-size:16px}
+.alert{background:var(--badbg);color:var(--bad);border:1px solid var(--bad);border-radius:12px;padding:14px 16px;margin-bottom:18px;font-weight:600}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:720px}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:center;font-size:14px}
+th{background:#0B1F3A;color:#fff}th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--card);font-weight:600}th:first-child{background:#0B1F3A}
+td b{color:var(--text)}td small{display:block;color:var(--mut);font-size:11px}
+td.has{background:rgba(201,162,39,.14)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{background:none;border:0;color:var(--text);padding:7px 14px;cursor:pointer;font:inherit}
+.seg button.p{background:var(--okbg);color:var(--ok);font-weight:700}.seg button.a{background:var(--badbg);color:var(--bad);font-weight:700}
+.tl{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);gap:10px}
+.unc{max-height:240px;overflow:auto}
+.unc .tl b{color:var(--bad)}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#0B1F3A;color:#fff;border-left:4px solid var(--gold);padding:11px 18px;border-radius:10px;display:none;z-index:9;max-width:90%}
+#toast.bad{border-color:#ff6b61}
+.empty{text-align:center;padding:30px 10px;color:var(--mut)}
+@media(max-width:600px){nav{margin-left:0;width:100%}.hero svg{display:none}}
+</style>
+</head>
+<body>
+<header><div class="bar"><div class="brand"><i>S</i><span id="bn"></span></div><nav id="nav"></nav></div></header>
+<main id="app"></main>
+<div id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat"],P=8,KEY="subplanner_v1";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const todayStr=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+let saved=null;try{saved=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+let S=Object.assign({school:"",done:false,theme:matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light",classes:[],teachers:[],absent:{},view:"dash"},saved||{});
+S.date=todayStr();let resetArm=false;
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+function toast(m,bad){const t=$("#toast");t.textContent=m;t.className=bad?"bad":"";t.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display="none",4200)}
+
+/* ---------- name + class normalising ---------- */
+const PRE=/^(mr|mrs|ms|miss|dr|sir|madam|mam|maam|shri|smt)\s+/;
+function key(n){let s=String(n||"").toLowerCase().replace(/[.,]/g," ").replace(/\s+/g," ").trim();while(PRE.test(s))s=s.replace(PRE,"");return s}
+const cls=v=>String(v||"").toUpperCase().replace(/[\s\-_\/]/g,"");
+function findTeacher(n){
+  const k=key(n);if(!k)return null;
+  const ex=S.teachers.filter(t=>key(t.name)===k);if(ex.length)return ex[0];
+  const kt=k.split(" ");
+  const c=S.teachers.filter(t=>{const tt=key(t.name).split(" ");return tt[0]&&(kt.every(x=>tt.includes(x))||tt.every(x=>kt.includes(x)))});
+  return c.length===1?c[0]:null; /* ambiguous or unknown: ignore quietly, never error */
+}
+
+/* ---------- excel parsing ---------- */
+const FREE=/^(free|-+|—|–|nil|n\/a|na|x|\.)?$/i;
+function parseTT(rows){
+  const dayOf=v=>{const s=String(v).trim().toLowerCase().slice(0,3);return DAYS.find(d=>d.toLowerCase()===s)};
+  const cell=v=>{const s=String(v??"").trim();return FREE.test(s)?"":s};
+  let list=rows.filter(r=>dayOf(r[0])).map(r=>[dayOf(r[0]),r]);
+  if(!list.length){
+    let d=rows.filter(r=>r.some(c=>String(c).trim()));
+    if(d.length&&(/day/i.test(d[0][0])||/^p?(eriod)?\s*1$/i.test(String(d[0][1]).trim())))d=d.slice(1);
+    list=d.slice(0,6).map((r,i)=>[DAYS[i],r]);
+  }
+  const tt={};let n=0;
+  list.forEach(([d,r])=>{tt[d]=Array.from({length:P},(_,i)=>cell(r[i+1]));n+=tt[d].filter(Boolean).length});
+  return{tt,n};
+}
+
+/* ---------- substitution algorithm ---------- */
+function buildIdx(){
+  const m={};
+  S.classes.forEach(c=>{if(!c.tt)return;DAYS.forEach(d=>(c.tt[d]||[]).forEach((v,i)=>{if(!v)return;const t=findTeacher(v);if(t&&!m[t.id+"|"+d+"|"+i])m[t.id+"|"+d+"|"+i]=cls(c.name)}))});
+  return m;
+}
+function gen(date){
+  const wd=new Date(date+"T00:00:00").getDay();
+  if(wd===0)return{off:true,as:[],unc:[]};
+  const day=DAYS[wd-1],idx=buildIdx(),ab=new Set(S.absent[date]||[]);
+  const busy=(t,i)=>{const o=(t.tt&&t.tt[day]||[])[i];return o?cls(o):(idx[t.id+"|"+day+"|"+i]||"")};
+  const pres=S.teachers.filter(t=>!ab.has(t.id)),by=Object.fromEntries(S.teachers.map(t=>[t.id,t]));
+  const free=Array.from({length:P},(_,i)=>pres.filter(t=>!busy(t,i)).map(t=>t.id)); /* free-period list */
+  const load={},teach={};
+  pres.forEach(t=>{load[t.id]=0;teach[t.id]=Array.from({length:P},(_,i)=>i).filter(i=>busy(t,i)).length});
+  const jobs=[],seen=new Set();
+  S.teachers.filter(t=>ab.has(t.id)).forEach(t=>{for(let i=0;i<P;i++){const c=busy(t,i);if(c&&!seen.has(c+"|"+i)){seen.add(c+"|"+i);jobs.push({p:i+1,cls:c,ab:t.id})}}});
+  jobs.sort((a,b)=>free[a.p-1].length-free[b.p-1].length||a.p-b.p); /* hardest periods first */
+  jobs.forEach(j=>{
+    const f=free[j.p-1];
+    f.sort((a,b)=>load[a]-load[b]||teach[a]-teach[b]||key(by[a].name).localeCompare(key(by[b].name)));
+    if(f.length){j.sub=f.shift();load[j.sub]++}
+  });
+  const order=Object.fromEntries(S.teachers.map((t,i)=>[t.id,i]));
+  jobs.sort((a,b)=>a.p-b.p);
+  return{day,by,ab,as:jobs.filter(j=>j.sub).sort((a,b)=>order[a.sub]-order[b.sub]||a.p-b.p),unc:jobs.filter(j=>!j.sub)};
+}
+
+/* ---------- excel export ---------- */
+function saveXlsx(wb,name){
+  try{XLSX.writeFile(wb,name)}catch(e){toast("Couldn’t save the file.",1)}
+}
+function exportChart(){
+  const r=gen(S.date),rows=[[(S.school||"School")+" — Substitution Chart"],[r.day+", "+S.date],[],["Teacher",...Array.from({length:P},(_,i)=>i+1)]];
+  const g={};r.as.forEach(j=>{(g[j.sub]=g[j.sub]||Array(P).fill(""))[j.p-1]=j.cls});
+  Object.keys(g).forEach(id=>rows.push([r.by[id].name,...g[id]]));
+  if(r.unc.length){rows.push([],["NOT ASSIGNED"],["Period","Class","Absent teacher"]);r.unc.forEach(j=>rows.push([j.p,j.cls,r.by[j.ab].name]))}
+  const ws=XLSX.utils.aoa_to_sheet(rows);ws["!cols"]=[{wch:24},...Array(P).fill({wch:9})];ws["!merges"]=[{s:{r:0,c:0},e:{r:0,c:8}}];
+  const d=[["Period","Class","Absent teacher","Substitute"],...r.as.concat(r.unc).sort((a,b)=>a.p-b.p).map(j=>[j.p,j.cls,r.by[j.ab].name,j.sub?r.by[j.sub].name:"NOT ASSIGNED"])];
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Substitution Chart");XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(d),"Details");
+  saveXlsx(wb,"Substitution_"+S.date+".xlsx");
+}
+function exportTemplate(){
+  const rows=[["Day",...Array.from({length:P},(_,i)=>i+1)],...DAYS.map(d=>[d])];
+  const ws=XLSX.utils.aoa_to_sheet(rows);ws["!cols"]=Array(P+1).fill({wch:10});
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Timetable");saveXlsx(wb,"Timetable_Template.xlsx");
+}
+
+/* ---------- views ---------- */
+const hero=()=>`<svg viewBox="0 0 220 120" aria-hidden="true"><rect width="220" height="120" rx="14" fill="#13305A"/><circle cx="186" cy="26" r="14" fill="#C9A227" opacity=".9"/><path d="M38 64 110 26l72 38z" fill="#C9A227"/><rect x="50" y="64" width="120" height="44" fill="#fff"/><rect x="62" y="74" width="16" height="16" fill="#0B1F3A"/><rect x="142" y="74" width="16" height="16" fill="#0B1F3A"/><rect x="98" y="78" width="24" height="30" fill="#C9A227"/><rect x="30" y="108" width="160" height="4" fill="#C9A227"/></svg>`;
+const longDate=d=>new Date(d+"T00:00:00").toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+function ttRows(list,t){
+  const kc={};S.teachers.forEach(x=>{const k=key(x.name);kc[k]=(kc[k]||0)+1});
+  return list.map(it=>`<div class="row"><input type="text" data-k="${t}n" data-id="${it.id}" placeholder="${t==="c"?"Class, e.g. 9-B or 6-A":"Teacher, e.g. Ms Nidhi or Mr Vikas Sharma"}" value="${esc(it.name)}">
+  <label class="file">Upload timetable<input type="file" hidden accept=".xlsx,.xls,.csv" data-k="${t}f" data-id="${it.id}"></label>
+  <span class="chip ${it.tt?"ok":""}">${it.tt?"✓ "+esc(it.fn||"loaded")+" · "+it.n+" periods":"No timetable yet"}</span>
+  ${t==="t"&&it.name&&kc[key(it.name)]>1?`<span class="chip bad">Same name — add a surname</span>`:""}
+  <button class="x" data-act="del" data-t="${t}" data-id="${it.id}" title="Remove">✕</button></div>`).join("");
+}
+function vTT(){
+  const ok=S.school.trim()&&S.teachers.some(t=>t.tt);
+  return `<div class="card hero">${hero()}<div><h1>${S.done?"Timetables":"Welcome — let’s set up your school"}</h1><p class="sub">Upload each timetable once. Rows are days (Mon–Sat), columns are periods 1–8, and each cell holds a teacher name (class files) or a class (teacher files). Blank means free.</p><button class="btn gold" data-act="tpl">Download Excel template</button></div></div>
+  <div class="card"><h2>School</h2><div class="row"><input type="text" data-k="school" placeholder="School name" value="${esc(S.school)}"></div></div>
+  <div class="card"><h2>Class timetables</h2><p class="sub">Optional but helpful: used to double-check which classes each teacher has.</p><button class="btn" data-act="addc">+ Add class</button>${ttRows(S.classes,"c")}</div>
+  <div class="card"><h2>Teachers’ timetables</h2><p class="sub">Used to find free periods and each absent teacher’s classes. Titles like Mr/Ms are ignored when matching names.</p><button class="btn" data-act="addt">+ Add teacher</button>${ttRows(S.teachers,"t")}</div>
+  ${S.done?`<p class="sub">Changes are saved automatically in this browser.</p>`:`<button class="btn gold" data-act="finish" ${ok?"":"disabled"}>Finish setup</button> <span class="sub">${ok?"":"Add a school name and at least one teacher timetable."}</span>`}`;
+}
+function vDash(){
+  const r=gen(S.date),n=S.teachers.length,a=(S.absent[S.date]||[]).length;
+  let h=`<div class="card hero">${hero()}<div><h1>${esc(S.school)} dashboard</h1><p class="sub">${longDate(S.date)}</p><input type="date" value="${S.date}" data-k="date"></div></div>
+  <div class="stats"><div class="stat"><b>${a}</b><span>Absent</span></div><div class="stat"><b>${n-a}</b><span>Present</span></div><div class="stat"><b>${r.as.length}</b><span>Assigned</span></div><div class="stat ${r.unc.length?"bad":""}"><b>${r.unc.length}</b><span>Uncovered</span></div></div>`;
+  if(r.off)return h+`<div class="card empty">It’s Sunday — no substitution chart needed.</div>`;
+  if(!a)return h+`<div class="card empty">No teachers are marked absent for this date.<br><br><button class="btn" data-act="nav" data-v="att">Mark attendance</button></div>`;
+  if(r.unc.length)h+=`<div class="alert">⚠ ${r.unc.length} period${r.unc.length>1?"s":""} could not be covered — no free teacher available. See “Not assigned” below.</div>`;
+  const g={};r.as.forEach(j=>{(g[j.sub]=g[j.sub]||Array(P).fill(null))[j.p-1]=j});
+  h+=`<div class="card"><h2>Substitution chart</h2><p class="sub">${r.day} · ${longDate(S.date)}</p><div class="tw"><table><tr><th>Teacher</th>${Array.from({length:P},(_,i)=>`<th>${i+1}</th>`).join("")}</tr>
+  ${Object.keys(g).map(id=>`<tr><td>${esc(r.by[id].name)}</td>${g[id].map(j=>j?`<td class="has"><b>${esc(j.cls)}</b><small>for ${esc(r.by[j.ab].name)}</small></td>`:"<td></td>").join("")}</tr>`).join("")||`<tr><td colspan="9" class="empty">No periods to cover.</td></tr>`}</table></div>
+  <div class="row"><button class="btn gold" data-act="dl">⬇ Download Excel chart</button></div></div>`;
+  h+=`<div class="card"><h2>Not assigned</h2><p class="sub">Decide manually how to cover these periods.</p><div class="unc">${r.unc.map(j=>`<div class="tl"><span><b>Period ${j.p} · ${esc(j.cls)}</b></span><span class="chip bad">${esc(r.by[j.ab].name)} absent</span></div>`).join("")||`<div class="empty">Every period is covered ✓</div>`}</div></div>`;
+  return h;
+}
+function vAtt(){
+  const ab=new Set(S.absent[S.date]||[]);
+  return `<div class="card"><h1>Attendance</h1><p class="sub">Mark teachers who are absent. The chart updates instantly.</p><div class="row"><input type="date" value="${S.date}" data-k="date"><button class="btn ghost" data-act="allp">Mark all present</button><button class="btn gold" data-act="nav" data-v="dash">View chart →</button></div></div>
+  <div class="card">${S.teachers.map(t=>`<div class="tl"><span>${esc(t.name||"Unnamed")}</span><div class="seg"><button class="${ab.has(t.id)?"":"p"}" data-act="abs" data-id="${t.id}" data-s="0">Present</button><button class="${ab.has(t.id)?"a":""}" data-act="abs" data-id="${t.id}" data-s="1">Absent</button></div></div>`).join("")||`<div class="empty">Add teachers in Timetables first.</div>`}</div>`;
+}
+function vSet(){
+  return `<div class="card"><h1>Settings</h1><div class="row"><input type="text" data-k="school" value="${esc(S.school)}" placeholder="School name"></div></div>
+  <div class="card"><h2>Appearance</h2><div class="seg" style="margin-top:8px"><button class="${S.theme==="light"?"p":""}" data-act="theme" data-v="light">☀ Light</button><button class="${S.theme==="dark"?"p":""}" data-act="theme" data-v="dark">☾ Dark</button></div></div>
+  <div class="card"><h2>Data</h2><p class="sub">Everything is stored only in this browser.</p><button class="btn ghost" data-act="reset">${resetArm?"Click again to erase everything":"Reset all data"}</button></div>`;
+}
+function render(){
+  document.documentElement.dataset.theme=S.theme;
+  $("#bn").textContent=S.school||"Substitution Planner";
+  const v=S.done?S.view:"tt";
+  $("#nav").innerHTML=S.done?[["dash","Dashboard"],["att","Attendance"],["tt","Timetables"],["set","Settings"]].map(([k,l])=>`<button class="${v===k?"on":""}" data-act="nav" data-v="${k}">${l}</button>`).join(""):"";
+  $("#app").innerHTML=({dash:vDash,att:vAtt,tt:vTT,set:vSet}[v]||vDash)();
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act,id=b.dataset.id;
+  if(a!=="reset")resetArm=false;
+  if(a==="nav")S.view=b.dataset.v;
+  else if(a==="addc")S.classes.push({id:uid(),name:"",tt:null});
+  else if(a==="addt")S.teachers.push({id:uid(),name:"",tt:null});
+  else if(a==="del"){const k=b.dataset.t==="c"?"classes":"teachers";S[k]=S[k].filter(x=>x.id!==id)}
+  else if(a==="abs"){const s=new Set(S.absent[S.date]||[]);b.dataset.s==="1"?s.add(id):s.delete(id);S.absent[S.date]=[...s];const r=gen(S.date);if(r.unc.length)toast(r.unc.length+" period(s) can’t be covered — no free teacher.",1)}
+  else if(a==="allp")S.absent[S.date]=[];
+  else if(a==="theme")S.theme=b.dataset.v;
+  else if(a==="finish"){S.done=true;S.view="dash"}
+  else if(a==="dl")return exportChart();
+  else if(a==="tpl")return exportTemplate();
+  else if(a==="reset"){if(!resetArm){resetArm=true;render();return}try{localStorage.removeItem(KEY)}catch(x){}S={school:"",done:false,theme:S.theme,classes:[],teachers:[],absent:{},view:"dash",date:todayStr()};resetArm=false}
+  save();render();
+});
+document.addEventListener("input",e=>{
+  const k=e.target.dataset.k,id=e.target.dataset.id,v=e.target.value;
+  if(k==="school"){S.school=v;$("#bn").textContent=v||"Substitution Planner"}
+  else if(k==="cn"||k==="tn"){const it=(k==="cn"?S.classes:S.teachers).find(x=>x.id===id);if(it)it.name=v}
+  else return;
+  save();
+});
+document.addEventListener("change",async e=>{
+  const k=e.target.dataset.k,id=e.target.dataset.id;
+  if(k==="date"&&e.target.value){S.date=e.target.value;return render()}
+  if(k==="tn"||k==="cn")return render();
+  if(k!=="cf"&&k!=="tf")return;
+  const f=e.target.files[0];if(!f)return;
+  const it=(k==="cf"?S.classes:S.teachers).find(x=>x.id===id);
+  try{
+    const wb=XLSX.read(await f.arrayBuffer(),{type:"array"});
+    const r=parseTT(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:""}));
+    if(!r.n)throw 0;it.tt=r.tt;it.fn=f.name;it.n=r.n;toast("Timetable loaded")
+  }catch(x){toast("Couldn’t read that file — please use the template format.",1)}
+  save();render();
+});
+render();
+</script>
+</body>
+</html>
